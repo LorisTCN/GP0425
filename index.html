@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Invito GP Rozzano</title>
+    <title>GP</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         body, html {
@@ -85,7 +85,7 @@
         <p>Hai colpito una roccia.</p>
         <div class="btn-container">
             <button class="btn" onclick="showMenu()">MENU</button>
-            <button class="btn" onclick="startGame(currentDifficulty)">RIPROVA</button>
+            <button class="btn" onclick="restartGame()">RIPROVA</button>
         </div>
     </div>
 
@@ -99,14 +99,13 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        // UI Elements
+        // Elementi Interfaccia
         const startScreen = document.getElementById('startScreen');
         const gameOverScreen = document.getElementById('gameOverScreen');
         const winScreen = document.getElementById('winScreen');
         const controls = document.getElementById('controls');
         const warning = document.getElementById('warning');
         
-        // Resize canvas
         function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
@@ -114,8 +113,7 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // Game Variables
-        let gameLoop;
+        // Variabili di Gioco
         let isPlaying = false;
         let speedMultiplier = 1;
         let baseSpeed = 4;
@@ -124,18 +122,16 @@
         let roadLines = [];
         let invertedControls = false;
         let invertTimer = 0;
-        let currentDifficulty = 'facile'; // Impostazione predefinita
+        let currentDifficulty = 'facile'; 
         
-        // Player Car
         const car = { width: 40, height: 60, x: 0, y: 0, speed: 6, moveLeft: false, moveRight: false };
 
-        // Colori Game Boy
         const COLOR_DARKEST = '#0f380f';
         const COLOR_DARK = '#306230';
         const COLOR_LIGHT = '#8bac0f';
         const COLOR_LIGHTEST = '#9bbc0f';
 
-        // Setup Controls
+        // Setup Controlli
         document.getElementById('btnLeft').addEventListener('touchstart', (e) => { e.preventDefault(); car.moveLeft = true; });
         document.getElementById('btnLeft').addEventListener('touchend', (e) => { e.preventDefault(); car.moveLeft = false; });
         document.getElementById('btnRight').addEventListener('touchstart', (e) => { e.preventDefault(); car.moveRight = true; });
@@ -158,8 +154,12 @@
             warning.classList.add('hidden');
         }
 
+        function restartGame() {
+            startGame(currentDifficulty);
+        }
+
         function startGame(difficulty) {
-            currentDifficulty = difficulty; // Salva la difficoltà scelta
+            currentDifficulty = difficulty; 
             
             startScreen.classList.add('hidden');
             gameOverScreen.classList.add('hidden');
@@ -170,4 +170,9 @@
             car.y = canvas.height - 150;
             car.moveLeft = false; car.moveRight = false;
             
-            obstacles
+            obstacles = [];
+            roadLines = [0, canvas.height/3, (canvas.height/3)*2];
+            speedMultiplier = 1;
+            frameCount = 0;
+            invertedControls = false;
+            invertTimer = 0;

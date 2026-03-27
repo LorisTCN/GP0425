@@ -20,21 +20,22 @@
         .ui-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            background: rgba(155, 188, 15, 0.9); z-index: 10; text-align: center; padding: 20px; box-sizing: border-box;
+            background: rgba(155, 188, 15, 0.95); z-index: 10; text-align: center; padding: 20px; box-sizing: border-box;
         }
         .hidden { display: none !important; }
         h1, p { line-height: 1.5; }
-        h1 { font-size: 20px; color: #0f380f; text-shadow: 2px 2px #9bbc0f; }
-        p { font-size: 12px; }
+        h1 { font-size: 20px; color: #0f380f; text-shadow: 2px 2px #9bbc0f; margin-bottom: 10px; }
+        p { font-size: 10px; margin: 5px 0; }
         
         /* Bottoni Stile Retrò */
         .btn {
             background-color: #0f380f; color: #9bbc0f;
-            border: 4px solid #306230; padding: 15px 20px;
-            font-family: 'Press Start 2P', cursive; font-size: 14px;
-            cursor: pointer; margin-top: 20px; text-decoration: none; display: inline-block;
+            border: 4px solid #306230; padding: 12px 15px;
+            font-family: 'Press Start 2P', cursive; font-size: 12px;
+            cursor: pointer; margin: 10px 5px; text-decoration: none; display: inline-block;
         }
         .btn:active { background-color: #306230; }
+        .btn-container { margin-top: 15px; }
 
         /* Controlli Touch Mobile */
         #controls {
@@ -70,19 +71,27 @@
         <h1>GP ROZZANO</h1>
         <p>Usa le frecce per guidare.</p>
         <p>Evita le rocce scure!</p>
-        <p>Le bottiglie chiare invertono i comandi!</p>
-        <button class="btn" onclick="startGame()">INIZIA</button>
+        <p>Le bottiglie invertono i comandi!</p>
+        
+        <div class="btn-container">
+            <p style="margin-bottom: 15px; font-size: 12px;">Scegli il livello:</p>
+            <button class="btn" onclick="startGame('facile')">FACILE</button>
+            <button class="btn" onclick="startGame('difficile')">DIFFICILE</button>
+        </div>
     </div>
 
     <div id="gameOverScreen" class="ui-layer hidden">
         <h1>CRASH!</h1>
         <p>Hai colpito una roccia.</p>
-        <button class="btn" onclick="startGame()">RIPROVA</button>
+        <div class="btn-container">
+            <button class="btn" onclick="showMenu()">MENU</button>
+            <button class="btn" onclick="startGame(currentDifficulty)">RIPROVA</button>
+        </div>
     </div>
 
     <div id="winScreen" class="ui-layer hidden">
         <h1>COMPLIMENTI!</h1>
-        <p style="font-size: 14px; margin: 20px 0;">Ti sei qualificato per il GP che si terrà Sabato 25 Aprile ore 16.45.</p>
+        <p style="font-size: 12px; margin: 20px 0; line-height: 1.8;">Ti sei qualificato per il GP che si terrà Sabato 25 Aprile ore 16.45.</p>
         <a href="https://www.google.it/maps/place/Via+Giuseppe+Di+Vittorio,+20089+Rozzano+MI/" target="_blank" class="btn">dove?</a>
     </div>
 
@@ -115,6 +124,7 @@
         let roadLines = [];
         let invertedControls = false;
         let invertTimer = 0;
+        let currentDifficulty = 'facile'; // Impostazione predefinita
         
         // Player Car
         const car = { width: 40, height: 60, x: 0, y: 0, speed: 6, moveLeft: false, moveRight: false };
@@ -131,7 +141,6 @@
         document.getElementById('btnRight').addEventListener('touchstart', (e) => { e.preventDefault(); car.moveRight = true; });
         document.getElementById('btnRight').addEventListener('touchend', (e) => { e.preventDefault(); car.moveRight = false; });
         
-        // Keyboard support for testing on PC
         window.addEventListener('keydown', (e) => {
             if(e.key === 'ArrowLeft') car.moveLeft = true;
             if(e.key === 'ArrowRight') car.moveRight = true;
@@ -141,7 +150,17 @@
             if(e.key === 'ArrowRight') car.moveRight = false;
         });
 
-        function startGame() {
+        function showMenu() {
+            gameOverScreen.classList.add('hidden');
+            winScreen.classList.add('hidden');
+            controls.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+            warning.classList.add('hidden');
+        }
+
+        function startGame(difficulty) {
+            currentDifficulty = difficulty; // Salva la difficoltà scelta
+            
             startScreen.classList.add('hidden');
             gameOverScreen.classList.add('hidden');
             winScreen.classList.add('hidden');
@@ -151,150 +170,4 @@
             car.y = canvas.height - 150;
             car.moveLeft = false; car.moveRight = false;
             
-            obstacles = [];
-            roadLines = [0, canvas.height/3, (canvas.height/3)*2];
-            speedMultiplier = 1;
-            frameCount = 0;
-            invertedControls = false;
-            invertTimer = 0;
-            warning.classList.add('hidden');
-            
-            isPlaying = true;
-            requestAnimationFrame(update);
-        }
-
-        function gameOver() {
-            isPlaying = false;
-            controls.classList.add('hidden');
-            warning.classList.add('hidden');
-            gameOverScreen.classList.remove('hidden');
-        }
-
-        function winGame() {
-            isPlaying = false;
-            controls.classList.add('hidden');
-            warning.classList.add('hidden');
-            winScreen.classList.remove('hidden');
-        }
-
-        function update() {
-            if (!isPlaying) return;
-
-            // Timer Vittoria (Vince dopo ca. 40 secondi, assumendo 60fps)
-            frameCount++;
-            if (frameCount > 2400) { 
-                winGame();
-                return;
-            }
-
-            // Aumento difficoltà (velocità)
-            speedMultiplier = 1 + (frameCount / 800); 
-            let currentScrollSpeed = baseSpeed * speedMultiplier;
-
-            // Logica Inversione Comandi
-            if (invertTimer > 0) {
-                invertTimer--;
-                if (invertTimer <= 0) {
-                    invertedControls = false;
-                    warning.classList.add('hidden');
-                }
-            }
-
-            // Movimento Auto
-            let moveL = invertedControls ? car.moveRight : car.moveLeft;
-            let moveR = invertedControls ? car.moveLeft : car.moveRight;
-
-            if (moveL && car.x > 10) car.x -= car.speed;
-            if (moveR && car.x < canvas.width - car.width - 10) car.x += car.speed;
-
-            // Ostacoli (Spawn)
-            if (Math.random() < 0.02 * speedMultiplier) {
-                let type = Math.random() > 0.7 ? 'bottle' : 'rock'; // 30% bottiglie, 70% rocce
-                let w = type === 'rock' ? 40 : 20;
-                let h = type === 'rock' ? 40 : 50;
-                obstacles.push({
-                    x: Math.random() * (canvas.width - w - 20) + 10,
-                    y: -50,
-                    width: w, height: h, type: type
-                });
-            }
-
-            // Aggiorna Linee Strada
-            for(let i=0; i<roadLines.length; i++){
-                roadLines[i] += currentScrollSpeed;
-                if(roadLines[i] > canvas.height) roadLines[i] = -100;
-            }
-
-            // Sfondo
-            ctx.fillStyle = COLOR_LIGHTEST;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Disegna Bordi Strada
-            ctx.fillStyle = COLOR_DARKEST;
-            ctx.fillRect(0, 0, 10, canvas.height);
-            ctx.fillRect(canvas.width - 10, 0, 10, canvas.height);
-
-            // Disegna Linea tratteggiata centrale
-            ctx.fillStyle = COLOR_LIGHT;
-            for(let i=0; i<roadLines.length; i++){
-                ctx.fillRect(canvas.width/2 - 5, roadLines[i], 10, 80);
-            }
-
-            // Aggiorna e Disegna Ostacoli
-            for (let i = obstacles.length - 1; i >= 0; i--) {
-                let obs = obstacles[i];
-                obs.y += currentScrollSpeed;
-
-                // Disegno ostacoli in "Pixel Art" semplice
-                if (obs.type === 'rock') {
-                    ctx.fillStyle = COLOR_DARKEST;
-                    ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
-                    ctx.fillStyle = COLOR_DARK;
-                    ctx.fillRect(obs.x+5, obs.y+5, obs.width-10, obs.height-10); // dettaglio roccia
-                } else {
-                    ctx.fillStyle = COLOR_LIGHT; // Colore chiaro per la bottiglia
-                    ctx.fillRect(obs.x, obs.y+10, obs.width, obs.height-10); // corpo
-                    ctx.fillRect(obs.x+5, obs.y, obs.width-10, 10); // collo
-                    ctx.fillStyle = COLOR_DARKEST; // etichetta
-                    ctx.fillRect(obs.x, obs.y+20, obs.width, 15);
-                }
-
-                // Collisioni
-                if (car.x < obs.x + obs.width && car.x + car.width > obs.x &&
-                    car.y < obs.y + obs.height && car.y + car.height > obs.y) {
-                    
-                    if (obs.type === 'rock') {
-                        gameOver();
-                        return;
-                    } else if (obs.type === 'bottle') {
-                        invertedControls = true;
-                        invertTimer = 300; // 5 secondi (a 60 fps)
-                        warning.classList.remove('hidden');
-                        obstacles.splice(i, 1); // Rimuovi bottiglia
-                        continue;
-                    }
-                }
-
-                if (obs.y > canvas.height) {
-                    obstacles.splice(i, 1);
-                }
-            }
-
-            // Disegna Auto
-            ctx.fillStyle = COLOR_DARKEST;
-            ctx.fillRect(car.x, car.y, car.width, car.height); // Corpo centrale
-            ctx.fillStyle = COLOR_LIGHTEST;
-            ctx.fillRect(car.x + 5, car.y + 15, car.width - 10, 15); // Finestrino davanti
-            ctx.fillRect(car.x + 5, car.y + 45, car.width - 10, 10); // Finestrino dietro
-            // Ruote
-            ctx.fillStyle = COLOR_DARK;
-            ctx.fillRect(car.x - 4, car.y + 5, 4, 15);
-            ctx.fillRect(car.x + car.width, car.y + 5, 4, 15);
-            ctx.fillRect(car.x - 4, car.y + 40, 4, 15);
-            ctx.fillRect(car.x + car.width, car.y + 40, 4, 15);
-
-            requestAnimationFrame(update);
-        }
-    </script>
-</body>
-</html>
+            obstacles
